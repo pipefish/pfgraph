@@ -1,0 +1,110 @@
+import "blox/connect/Exception.proto";
+import "blox/connect/ConnectBlox.proto";
+
+package blox.connect;
+option java_package = "com.logicblox.connect";
+
+option optimize_for = SPEED;
+
+message AsyncRequest {
+   required SendInfo send_info = 1;
+   required bytes data = 2;
+   optional AsyncContinue normal_continue = 3;
+   optional AsyncContinue exception_continue = 4;
+}
+
+message AsyncResponse {
+   optional ExceptionContainer exception = 1;
+}
+
+message AsyncContinue {
+   // where to send the next message to 
+   required SendInfo send_info = 1;
+
+   // Not sure yet if it is a wise to directly use the actual message
+   // to send (ImportProtoBuf), because parts would have to be
+   // optional that should really be required (the lambda
+   // aspect of a continuation).
+	 // Alternatively, it could be a dynamic protocol buffer message
+   // with a 'hole'. This hole could be perhaps be encoded in the
+   // message. Not sure how to do that yet. Unfortunately, this would
+   // also require reflective use of protobuf, which has performance
+   // issues.
+   required AsyncImportProtoBuf import_protobuf = 2;
+   optional AsyncExecInactiveBlock exec_inactive = 3;
+}
+
+message AsyncImportProtoBuf
+{
+   required string workspace = 1;
+   required string response_protocol = 2;
+   required string response_type = 3;
+}
+
+message AsyncExecInactiveBlock
+{
+   required string workspace = 1;
+   required string block_name = 2;
+   required uint32 req_id = 3;
+}
+
+message SendInfo {
+   required Scheme scheme = 1;
+   required string hostname = 2;
+   required uint32 port = 3;
+   optional string relative_address = 4;
+}
+
+enum Scheme {
+   /* Simple protocol where the message is send over a socket, preceed
+      by 4 bytes that indicate the size of the protobuf message. */
+   SIMPLE = 0;
+
+   /* just to illustrate the point of different scheme: this scheme
+      would indicate that we use ssl. */
+   SIMPLE_SSL = 1;
+
+   // Http services
+   HTTP = 2;
+}
+
+message AsyncAdminRequest
+{
+   optional JoinRequest join = 1;
+   optional ShutdownRequest shutdown_server = 2;
+   optional StatusRequest status = 3;
+}
+
+message AsyncAdminResponse
+{
+   optional ExceptionContainer exception = 1;
+   optional JoinResponse join = 2;
+   optional ShutdownResponse shutdown_server = 3;
+   optional StatusResponse status = 4;
+}
+
+/**
+ * Join
+ */
+message JoinRequest
+{
+   // timeout in milliseconds
+   optional uint32 timeout = 1;
+}
+
+message JoinResponse
+{
+  required bool timeout = 1;
+}
+
+/**
+ * Shutdown
+ */
+message ShutdownRequest
+{
+}
+
+message ShutdownResponse
+{
+   required bool success = 1;
+}

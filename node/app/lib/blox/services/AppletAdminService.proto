@@ -1,0 +1,64 @@
+package blox.services.appletadmin;
+
+option java_package = "com.logicblox.services.appletadmin";
+
+option optimize_for = SPEED;
+
+/**
+ * Response/request union
+ */
+message Request
+{
+  optional SessionStatus session_status = 1;
+  optional CloseSession close_session = 2;
+}
+
+message Response
+{
+  optional ExceptionContainer exception = 1;
+  optional SessionStatusResponse session_status = 2;
+  optional CloseSessionResponse close_session = 3;
+}
+
+/**
+ * Exceptions
+ */
+message ExceptionContainer
+{
+  required string message = 1;
+}
+
+/**
+ * Session status
+ */
+message SessionStatus
+{
+}
+
+message SessionStatusResponse
+{
+}
+
+/**
+ * Closing session
+ */
+message CloseSession
+{
+  required string session_id = 1;
+}
+
+message CloseSessionResponse
+{
+}
+
+message Session
+{
+  required string session_id = 1;
+  required string workspace_filepath = 2;
+  required string workspace_name = 3;
+
+  required int64 creation_time = 4;
+  required int64 last_access_time = 5;
+
+  required uint32 process_id = 6;
+}

@@ -1,0 +1,10 @@
+package blox.services.framework;
+
+option java_package = "com.logicblox.services";
+
+option optimize_for = SPEED;
+
+message ServiceException
+{
+  required string message = 1;
+}

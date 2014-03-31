@@ -1,7 +1,9 @@
 var model = require('nodejs-model');
 
+module.exports = function(lbConnect,lbConfig) {
+
 //create a new model definition _User_ and define _name_/_password_ attributes
-var User = model("User")
+  User = model("User")
             .attr('id',{})
             .attr('name', {})
             .attr('password', {
@@ -51,3 +53,6 @@ User.get = function(id) {
   }
   return p;
 }
+
+//module.exports = User;
+};

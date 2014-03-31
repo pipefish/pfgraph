@@ -1,0 +1,17 @@
+/*
+message AdminRequest {
+  optional Status status;
+}
+
+message Status {
+}
+
+message StatusResponse {
+   repeated ActiveTransaction transaction;
+}
+
+message ActiveTransaction {
+   required long duration;
+   required Transaction transaction;
+}
+*/

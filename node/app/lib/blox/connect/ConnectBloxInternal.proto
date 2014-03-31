@@ -1,0 +1,54 @@
+package blox.connect;
+
+option java_package = "com.logicblox.connect";
+
+import "blox/connect/Exception.proto";
+
+option optimize_for = SPEED;
+
+/**
+ * Top-level request/response union
+ */
+message InternalRequest {
+  optional ProcessConfig config = 1;
+  optional OpenWorkspace open = 2;
+  optional CloseWorkspace close = 3;
+}
+
+message InternalResponse {
+  optional ExceptionContainer exception = 1;
+  optional ProcessInfo process_info = 2;
+}
+
+/**
+ * ProcessConfig
+ */
+message ProcessConfig {
+   required string data_dir = 1;
+   repeated string library_dir = 2;
+   optional string log_level = 3 [default = ""];
+   optional string log_dir = 4 [default = "$HOME/.lb_logs/"];
+   optional int32 transaction_timeout = 5 [default = -1];
+}
+
+/**
+ * Open workspace
+ */
+message OpenWorkspace {
+  required string path = 1;
+}
+
+/**
+ * Close workspace
+ */
+message CloseWorkspace {
+  required string path = 1;
+}
+
+/**
+ * Process info
+ */
+message ProcessInfo {
+   required int32 pid = 1;
+   required string name = 2;
+}

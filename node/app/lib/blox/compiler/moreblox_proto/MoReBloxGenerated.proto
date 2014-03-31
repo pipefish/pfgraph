@@ -1,0 +1,226 @@
+package MoReBloxGenerated;
+
+option java_package = "com.logicblox.compiler";
+option java_outer_classname = "MoReBloxGeneratedProtoBuf";
+option optimize_for = SPEED;
+
+import "blox/options.proto";
+
+// 2011.10.20 GAW
+// Used to keep track of the position in the original source to which
+// the extracted code corresponds.  Ideally would try to factor out
+// filenames via pointers/handles to avoid repeating the same strings
+// many times
+message Position {
+  required int64 line=1;
+  required int64 column=2;
+}
+message Range {
+  required Position start=1;
+  required Position end=2;
+  optional string filename=3;
+}
+
+// ProtoBuf description of a message containing generated rules and clauses.
+// These are obtained by retrieving rules and clauses without a compilation unit as parent.
+
+message GeneratedBlocks {
+   repeated Block blocks = 1 [ (blox.options.set)=true ];
+
+   // SSH TODO: these really should be part of a Block, because predicates would belong to
+   // certain blocks.  Right now it's difficult to implement.
+   repeated PredicateDisplayNamePair predDisplayPair = 2 [ (blox.options.set)=true ];
+}
+
+message PredicateDisplayNamePair {
+   required string name=1;
+   required string displayName=2;
+}
+
+message Block {
+   required string blockName = 1;
+   required string runStage = 2;
+   required string lifetime = 3;
+
+   repeated Rule rules=4 [ (blox.options.set)=true ];
+   repeated KnownExternalAgg knownExtAggs=5 [ (blox.options.set)=true ];
+   repeated UnknownExternalAgg unknownExtAggs=6 [ (blox.options.set)=true ];
+   repeated Constraint constraints=7 [ (blox.options.set)=true ];
+
+   // SSH: hack right now to get a display name into the level 0 workspace.
+   optional string displayName=8;
+   repeated string blockDependencies=9 [ (blox.options.set)=true ];
+}
+
+message Rule {
+   required Formula ruleHead=1 [ (blox.options.is_constructor)=true ];
+   required Formula ruleBody=2 [ (blox.options.is_constructor)=true ];
+   optional Range range=3;
+}
+
+message Formula {
+   optional Atom atom=1 [ (blox.options.is_constructor)=true ];
+   optional DeltaAtom deltaAtom=2 [ (blox.options.is_constructor)=true ];
+   optional Conjunction conjunction=3 [ (blox.options.is_constructor)=true ];
+   optional Disjunction disjunction=4 [ (blox.options.is_constructor)=true ];
+   optional Negation negation=5 [ (blox.options.is_constructor)=true ];
+   optional Eq eq=6 [ (blox.options.is_constructor)=true ];
+   optional Ne ne=7 [ (blox.options.is_constructor)=true ];
+   optional Lt lt=8 [ (blox.options.is_constructor)=true ];
+   optional Le le=9 [ (blox.options.is_constructor)=true ];
+   optional Gt gt=10 [ (blox.options.is_constructor)=true ];
+   optional Ge ge=11 [ (blox.options.is_constructor)=true ];;
+}
+
+message Atom {
+   required string predName=1;
+   optional string stage=2;
+   required int64 numKeys=3;
+   repeated Expr args=4 [ (blox.options.is_constructor)=true ];
+   required bool oneToOne=5;
+}
+
+message DeltaAtom {
+   required string predName=1;
+   optional string stage=2;
+   required int64 numKeys=3;
+   repeated Expr args=4 [ (blox.options.is_constructor)=true ];
+   required bool oneToOne=5;
+   required string delta=6;
+}
+
+message Conjunction {
+   repeated Formula subFormulas=1 [ (blox.options.set)=true ];
+}
+
+message Disjunction {
+   repeated Formula subFormulas=1 [ (blox.options.set)=true ];
+}
+
+message Negation {
+   required Formula negated=1 [ (blox.options.is_constructor)=true ];
+}
+/*
+message ColonEq {
+   required Expr lhs=1;
+   required Expr rhs=2;
+}
+*/
+message Eq {
+   required Expr lhs=1 [ (blox.options.is_constructor)=true ];
+   required Expr rhs=2 [ (blox.options.is_constructor)=true ];
+}
+
+message Ne {
+   required Expr lhs=1 [ (blox.options.is_constructor)=true ];
+   required Expr rhs=2 [ (blox.options.is_constructor)=true ];
+}
+
+message Lt {
+   required Expr lhs=1 [ (blox.options.is_constructor)=true ];
+   required Expr rhs=2 [ (blox.options.is_constructor)=true ];
+}
+
+message Le {
+   required Expr lhs=1 [ (blox.options.is_constructor)=true ];
+   required Expr rhs=2 [ (blox.options.is_constructor)=true ];
+}
+
+message Gt {
+   required Expr lhs=1 [ (blox.options.is_constructor)=true ];
+   required Expr rhs=2 [ (blox.options.is_constructor)=true ];
+}
+
+message Ge {
+   required Expr lhs=1 [ (blox.options.is_constructor)=true ];
+   required Expr rhs=2 [ (blox.options.is_constructor)=true ];
+}
+
+message KnownExternalAgg {
+   required Formula ruleHead=1 [ (blox.options.is_constructor)=true ];
+   required Formula ruleBody=2 [ (blox.options.is_constructor)=true ];
+   required string aggLib=3;
+   repeated AggOp aggOps=4 [ (blox.options.is_constructor)=true ];
+}
+
+message AggOp {
+   repeated string resultVar=1;
+   required string opName=2;
+   repeated string opVar=3;
+   repeated string dimVar=4;
+}
+
+message UnknownExternalAgg {
+   required Formula ruleHead=1 [ (blox.options.is_constructor)=true ];
+   required Formula ruleBody=2 [ (blox.options.is_constructor)=true ];
+   required string aggLib=3;
+   required string aggOpString=4;
+}
+
+message Constraint {
+   required Formula lhs=1 [ (blox.options.is_constructor)=true ];
+   required Formula rhs=2 [ (blox.options.is_constructor)=true ];
+   optional Range range=3;
+}
+
+message Expr {
+   optional VarName varName=1 [ (blox.options.is_constructor)=true ];
+   optional AnonVarName anonVarName=2 [ (blox.options.is_constructor)=true ];
+   optional PredName predName=3 [ (blox.options.is_constructor)=true ];
+   optional string intConst=4;
+   optional string strConst=5;
+   optional string realConst=6;
+   optional string boolConst=7;
+   optional string datetimeConst=8;
+   optional Application application=9 [ (blox.options.is_constructor)=true ];
+   optional DeltaApp deltaApp=10 [ (blox.options.is_constructor)=true ];
+   optional Plus plus=11 [ (blox.options.is_constructor)=true ];
+   optional Minus minus=12 [ (blox.options.is_constructor)=true ];
+   optional Divide divide=13 [ (blox.options.is_constructor)=true ];
+   optional Multiply multiply=14 [ (blox.options.is_constructor)=true ];
+   optional string decimalConst=15;
+}
+
+message VarName {
+   required string name=1;
+}
+
+message AnonVarName {
+   required string name=1;
+}
+
+message PredName {
+   required string name=1;
+}
+
+message Application {
+   required string predName=1;
+   repeated Expr args=2 [ (blox.options.is_constructor)=true ];
+   optional string stage=3;
+}
+
+message DeltaApp {
+   required string predName=1;
+   repeated Expr args=2 [ (blox.options.is_constructor)=true ];
+
+   optional string stage=3;
+   required string delta=4;
+}
+
+message Plus {
+   required Expr lhs=1 [ (blox.options.is_constructor)=true ];
+   required Expr rhs=2 [ (blox.options.is_constructor)=true ];
+}
+
+message Divide {
+   required Expr lhs=1 [ (blox.options.is_constructor)=true ];
+   required Expr rhs=2 [ (blox.options.is_constructor)=true ];
+}
+message Multiply {
+   required Expr lhs=1 [ (blox.options.is_constructor)=true ];
+   required Expr rhs=2 [ (blox.options.is_constructor)=true ];
+}
+message Minus {
+   required Expr lhs=1 [ (blox.options.is_constructor)=true ];
+   required Expr rhs=2 [ (blox.options.is_constructor)=true ];
+}

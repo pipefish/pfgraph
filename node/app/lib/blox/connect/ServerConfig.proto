@@ -1,0 +1,52 @@
+import "blox/connect/BloxCommand.proto";
+import "blox/connect/Exception.proto";
+
+package blox.connect;
+option java_package = "com.logicblox.connect";
+
+option optimize_for = SPEED;
+
+/**
+ * Top-level request/response union
+ */
+message ServerConfig {
+   required string data_dir = 1;
+   required ServerEndpoint endpoint = 2;
+   required ServerEndpoint admin_endpoint = 3;
+   // required ServerEndpoint compiler_endpoint = 4;
+
+   repeated string library_dir = 5;
+
+   optional uint32 worker_threads = 6 [default = 4];
+   optional uint32 response_threads = 7 [default = 1];
+
+   optional uint32 admin_worker_threads = 8 [default = 1];
+   optional uint32 admin_response_threads = 9 [default = 1];
+
+   optional uint32 max_processes = 10 [default = 10];
+
+   optional string log_level = 11 [default = ""];
+   optional string log_dir = 12 [default = "$HOME/.lb_logs/"];
+
+   optional int32 transaction_timeout = 13 [default = -1];  // In milliseconds
+}
+
+message AsyncServerConfig {
+   required ServerEndpoint endpoint = 1;
+   required ServerEndpoint admin_endpoint = 2;
+   optional string log_level = 3 [default = ""];
+   optional uint32 worker_threads = 4 [default = 3];
+   optional uint32 admin_worker_threads = 5 [default = 1];
+   optional uint32 admin_response_threads = 6 [default = 1];
+}
+
+message ServerEndpoint {
+   optional string address =  1 [default = "127.0.0.1"];
+   optional uint32 port = 2 [default = 55179];
+   optional IPVersion ip_version = 3 [default = IPv4];
+}
+
+enum IPVersion {
+	IPv4 = 0;
+	IPv6 = 1;
+}

@@ -1,53 +1,45 @@
 var model = require('nodejs-model');
 
-//create a new model definition _User_ and define _name_/_password_ attributes
-var User = model("User")
+module.exports = function(lbConnect,lbConfig) {
+
+//create a new model definition _Things_ and define _name_/_password_ attributes
+  Things = model("Things")
             .attr('id',{})
-            .attr('name', {})
-            .attr('password', {
-                validations: {
-                  length: {
-                    minimum: 5,
-                    maximum: 20,
-                    messages: {
-                      tooShort: 'password is too short!',
-                      tooLong: 'password is too long!'
-                    }
-                  }
-                },
-                //this tags the accessibility as _private_
-                tags: ['private']
-            });
+            .attr('type', {})
+            .attr('name',{});
 
 
-User.get = function(id) {
+Things.get = function(id) {
   switch(id) {
   case 1:
-    p = User.create();
+    p = Things.create();
     p.update({
       id: 1,
-      name: "Fred",
-      password: "Wilma"
+      type: "Movie",
+      name: "Star Wars"
     });
     break;
   case 2:
-    p = User.create();
+    p = Things.create();
     p.update({
       id: 2,
-      name: "Barny",
-      password: "Betty"
+      name: "TVShow",
+      password: "Simpsons"
     });
     break;
   case 3:
-    p = User.create();
+    p = Things.create();
     p.update({
       id: 3,
-      name: "Pebbles",
-      password: "Bambam"
+      name: "Song",
+      password: "Royals"
     });
     break;
   default:
-    console.log("bad user id error");
+    console.log("bad Things id error");
   }
   return p;
 }
+
+//module.exports = Things;
+};

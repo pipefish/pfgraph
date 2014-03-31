@@ -1,0 +1,16 @@
+package MoReBloxNameQuery;
+
+option java_package = "com.logicblox.compiler";
+option java_outer_classname = "MoReBloxNameQueryProto";
+option optimize_for = SPEED;
+
+import "blox/options.proto";
+
+message NameQuery {
+   repeated QueryResult results=1 [ (blox.options.set)=true ];
+}
+
+message QueryResult {
+   required int64 key=1;
+   required string name=2;
+}

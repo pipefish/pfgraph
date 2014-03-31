@@ -1,0 +1,401 @@
+// Routes for graph source load ================================================
+var csv = require("ya-csv");
+var util = require('util');
+var async = require('async');
+var Stream = require('stream');
+
+// route middleware to make sure a user is logged in
+// function rebuildWorkspace(lbConnect, lbConfig) {
+//   console.log("Rebuilding workspace");
+//   var result = 1;
+//   var makews = false;
+//
+//   // This assumes the workspace exists.
+//   Step(
+//     function() {
+//       next = this;
+//
+//       lbConnect(lbConfig.default, function(err,api) {
+//         console.log("Preparing to create personblock");
+//         api.addBlock( "pfgraph",
+//                       {
+//                         name: "personblock",
+//                         logic:  "person(p), person_id(p:id) -> int(id). " +
+//                                 "person_name[p] = name -> person(p), string(name). " +
+//                                 "people_distance[p1,p2] = distance -> person(p1),person(p2), int(distance)."
+//                       },
+//                       function(err) {
+//                         if(err) {
+//                           console.log("Could not addblock:" + err.message);
+//                           throw err;
+//                         } else {
+//                           console.log("personblock added.")
+//                           next();
+//                         }
+//                       }
+//         );
+//         api.close();
+//       });
+//     },
+//
+//
+//     function(err) {
+//       if(err) { throw err; }
+//       next = this;
+//       lbConnect(lbConfig.default, function(err,api) {
+//         console.log("Preparing to create thingblock");
+//         api.addBlock("pfgraph",
+//                       {
+//                           name: "thingblock",
+//                           logic: "thing(t), thing_id(t:id) -> int(id)."
+//                       },
+//                       function(err) {
+//                         if(err) {
+//                             console.log("Could not addblock:" + err.message);
+//                             throw err;
+//                         } else {
+//                           console.log("thingblock added.")
+//                           next();
+//                         }
+//         });
+//         api.close();
+//       });
+//     },
+//
+//     function(err) {
+//       console.log("Preparing to create ratingsblock");
+//       if(err) { throw err; }
+//       next = this;
+//
+//       lbConnect(lbConfig.default, function(err,api) {
+//       // Create the ratings edge between a person and a thing
+//         api.addBlock( "pfgraph",
+//                       {
+//                           name: "ratingsblock",
+//                           // Note I'm using entity predicates here, not ints
+//                           logic:"person_rates_thing[p, t] = rating -> person(p), thing(t), int(rating)."
+//                       },
+//                       function(err) {
+//                         if(err) {
+//                             console.log("Could not addblock:" + err.message);
+//                             throw err;
+//                         } else {
+//                           console.log("ratingsblock added.")
+//                           next();
+//                         }
+//         });
+//         api.close();
+//       });
+//     },
+//
+//     function(err) {
+//       console.log("Preparing to create movieblock");
+//       if(err) { throw err; }
+//       next = this;
+//
+//       lbConnect(lbConfig.default, function(err,api) {
+//         // Create the ratings edge between a person and a thing
+//         api.addBlock( "pfgraph",
+//                       {
+//                           name: "movieblock",
+//                           logic: "movie(m) -> thing(m). lang:entity(`movie)."
+//                       },
+//                       function(err) {
+//                         if(err) {
+//                             console.log("<pre>Could not addblock:" + err.message);
+//                             throw err;
+//                         } else {
+//                           console.log("added block: movie(m) -> thing(t). lang:entity(`movie).");
+//                           next();
+//                         }
+//         });
+//         api.close();
+//       });
+//     },
+//
+//     function(err) {
+//       console.log("Preparing to create movietitleblock");
+//       if(err) { result = err; }
+//       next = this;
+//
+//       lbConnect(lbConfig.default, function(err,api) {
+//         api.addBlock( "pfgraph",
+//                     {
+//                       name: "movietitleblock",
+//                       logic: "movie_title[m] = title -> movie(m), string(title)."
+//                     },
+//                     function(err) {
+//                       if(err) {
+//                         console.log("<pre>Could not addblock:" + err.message);
+//                         result = err;
+//                       } else {
+//                         console.log("added block: movie_title[m] = title -> movie(m), string(title).");
+//                         next();
+//                       }
+//         });
+//         api.close();
+//       });
+//     },
+//     function(err) {
+//       console.log("This is the last function in the rebuildWorkspace chain");
+//       return 1;
+//     }
+//   );
+//   console.log("Exiting the rebuildWorkspace() function");
+//   return result;
+// }
+
+// The error in itself is pretty self explanatory (movie_id is no defined predicate), because, well, it's not. Instead you need to use thing_id. However, this also won't work (not you have to also add a "+" before movie_title):
+//
+// exec '+thing_id[m] = 1, +movie_title[m] = "Day after Tomorrow".'
+//
+// because it won't be able to figure out what "m" should be. This, however does work:
+//
+// exec '+movie(m), +thing_id[m] = 1, +movie_title[m] = "Day after Tomorrow".'
+//
+// But it also creates "1" movie, which you already did before (with +movie(1)). To _just_ set the title (without creating a new movie entity instance):
+//
+// exec '+movie_title[m] = "Day after Tomorrow" <- movie(m), thing_id[m] = 2.'
+//
+// Or: "For the movie m with id 2 insert the following movie_title."
+
+
+
+module.exports = function(app, passport,lbConnect,lbConfig) {
+
+  // api ---------------------------------------------------------------------
+
+  // return a thing
+  app.get('/v1/graph/reload', function(req, res) {
+    res.setHeader("Content-Type", "text/html");
+    res.write("<pre>");
+    last = 0;
+    // var stream = new Stream.Readable();
+    var series, queue, csvstream;
+
+    // stream.pipe(res);
+
+    async.series([
+
+      // Users
+      function(callback) {
+        streamFinished = false;
+        lbConnect(lbConfig.default, function(err,api) {
+          csvstream = csv.createCsvFileReader(__dirname + "/../../developer/users.csv", { columnsFromHeader: true });
+
+          queue = async.queue(function(task, next) {
+            if(task.done) { next(); } else {
+              mylogic = "+person(p), +person_id[p]=" + task.data.id + ", +person_name[p]=\"" + task.data.name + "\"."
+              console.log("loading user: " + mylogic);
+              return api.exec('pfgraph', {
+                        logic: mylogic
+                      }, function(err, result) {
+                        if(err) {
+                          console.log("Error: " + err.message);
+                        } else {
+                          res.write("added: " + mylogic + "<br>\n");
+                          next();
+                        }
+                      });
+            }
+          }, 1);
+
+          csvstream.on('data', function(data) {
+            console.log("got a line and pushing it onto the queue");
+            csvstream.pause();
+            queue.push({
+              data: data
+            });
+          });
+
+          queue.drain = function() {
+            console.log("in queue.drain()");
+            if(streamFinished) {
+              console.log("Stream has finished and the queue has drained. We are done here");
+              callback(null,"Users loaded");
+            } else {
+              console.log("Resuming csvstream");
+              csvstream.resume();
+            }
+          };
+
+
+          csvstream.on('end', function() {
+            console.log("got the 'end' event on csvstream. Nothing to 'resume'.");
+            streamFinished = true;
+            queue.push({ done: true });
+          });
+        });
+      },
+
+      // Movies
+      function(callback) {
+        streamFinished = false;
+        lbConnect(lbConfig.default, function(err,api) {
+          csvstream = csv.createCsvFileReader(__dirname + "/../../developer/movies.csv", { columnsFromHeader: true });
+
+          queue = async.queue(function(task, next) {
+            if(task.done) { next(); } else {
+              task.data.title = escape(task.data.title);
+              mylogic = "+movie(m), +thing_id[m]=" + task.data.id + ", +movie_title[m] = \"" + task.data.title + "\".";
+              console.log("loading movie:" +  mylogic );
+              return api.exec('pfgraph', {
+                        logic: mylogic
+                      }, function(err, result) {
+                        if(err) {
+                          console.log("Error: " + err.message);
+                        } else {
+                          res.write("added: " + mylogic + "<br>\n");
+                          next();
+                        }
+                      });
+            }
+          }, 1);
+
+          csvstream.on('data', function(data) {
+            console.log("got a line and pushing it onto the queue");
+            csvstream.pause();
+            queue.push({
+              data: data
+            });
+          });
+
+          queue.drain = function() {
+            console.log("in queue.drain()");
+            if(streamFinished) {
+              console.log("Stream has finished and the queue has drained. We are done here");
+              callback(null,"Movies loaded");
+            } else {
+              console.log("Resuming csvstream");
+              csvstream.resume();
+            }
+          };
+
+
+          csvstream.on('end', function() {
+            console.log("got the 'end' event on csvstream. Nothing to 'resume'.");
+            streamFinished = true;
+            queue.push({ done: true });
+          });
+        });
+      },
+
+      // Movie ratings
+      function(callback) {
+        streamFinished = false;
+        lbConnect(lbConfig.default, function(err,api) {
+          csvstream = csv.createCsvFileReader(__dirname + "/../../developer/ratings.csv", { columnsFromHeader: true });
+
+          queue = async.queue(function(task, next) {
+            if(task.done) { next(); } else {
+              task.data.title = escape(task.data.title);
+              mylogic = "+person_rates_thing[" + task.data.userid + "," + task.data.movieid + "] = " + task.data.rating +  ".";
+              console.log("loading rating:" +  mylogic );
+              return api.exec('pfgraph', {
+                        logic: mylogic
+                      }, function(err, result) {
+                        if(err) {
+                          console.log("Error: " + err.message);
+                        } else {
+                          res.write("added: " + mylogic + "<br>\n");
+                          next();
+                        }
+                      });
+            }
+          }, 1);
+
+          csvstream.on('data', function(data) {
+            console.log("got a line and pushing it onto the queue");
+            csvstream.pause();
+            queue.push({
+              data: data
+            });
+          });
+
+          queue.drain = function() {
+            console.log("in queue.drain()");
+            if(streamFinished) {
+              console.log("Stream has finished and the queue has drained. We are done here");
+              callback(null,"Ratings loaded");
+            } else {
+              console.log("Resuming csvstream");
+              csvstream.resume();
+            }
+          };
+
+
+          csvstream.on('end', function() {
+            console.log("got the 'end' event on csvstream. Nothing to 'resume'.");
+            streamFinished = true;
+            queue.push({ done: true });
+          });
+        });
+      },
+
+      // Distances
+      function(callback) {
+        streamFinished = false;
+        lbConnect(lbConfig.default, function(err,api) {
+          csvstream = csv.createCsvFileReader(__dirname + "/../../developer/prod-distances.csv", { columnsFromHeader: true });
+
+          queue = async.queue(function(task, next) {
+            if(task.done) { next(); } else {
+              task.data.title = escape(task.data.title);
+              mylogic = "+people_distance[" + task.data.userida + "," + task.data.useridb + "] = " + task.data.distance + ".";
+              console.log("loading distance:" +  mylogic );
+              return api.exec('pfgraph', {
+                        logic: mylogic
+                      }, function(err, result) {
+                        if(err) {
+                          console.log("Error: " + err.message);
+                        } else {
+                          res.write("added: " + mylogic + "<br>\n");
+                          next();
+                        }
+                      });
+            }
+          }, 1);
+
+          csvstream.on('data', function(data) {
+            console.log("got a line and pushing it onto the queue");
+            csvstream.pause();
+            queue.push({
+              data: data
+            });
+          });
+
+          queue.drain = function() {
+            console.log("in queue.drain()");
+            if(streamFinished) {
+              console.log("Stream has finished and the queue has drained. We are done here");
+              callback(null,"Distances loaded");
+            } else {
+              console.log("Resuming csvstream");
+              csvstream.resume();
+            }
+          };
+
+
+          csvstream.on('end', function() {
+            console.log("got the 'end' event on csvstream. Nothing to 'resume'.");
+            streamFinished = true;
+            queue.push({ done: true });
+          });
+        });
+      },
+
+
+      ],
+
+      function(err, results) {
+        console.log("In async.series final callback");
+        res.write(results.join("<br>"));
+        res.write("</pre>");
+        res.end();
+      });
+
+
+
+
+});
+}

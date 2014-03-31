@@ -1,0 +1,42 @@
+package MoReBloxPredicateInfo;
+
+import "blox/options.proto";
+
+option java_package = "com.logicblox.compiler";
+option java_outer_classname = "MoReBloxPredicateInfoProto";
+option optimize_for = SPEED;
+
+message PredicateInfos {
+   repeated PredicateInfo predInfos=1 [(blox.options.set) = true];
+}
+
+message PredicateInfo {
+   required string name=1;
+
+   required bool isEntity=2;
+   required bool isPrimitive=3;
+   required bool isNumeric=4;
+
+   required int64 arity=5;
+   required int64 numKeys=6;
+
+   repeated Type argTypes=7;
+
+   required bool isTopType = 8;
+   required bool isRefmode = 9;
+   required bool isOrdered = 10;
+   required bool isDefaultValue = 13;
+
+   repeated Type supertypes = 11 [(blox.options.set) = true];
+
+   required int64 level = 12;
+}
+
+message Type {
+   required string typeName=1;
+}
+
+message PredicateNames {
+   repeated string predNames=1 [(blox.options.set) = true];
+}
+

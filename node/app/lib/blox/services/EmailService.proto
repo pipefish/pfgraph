@@ -1,0 +1,31 @@
+
+package blox.services.email;
+
+option java_package = "com.logicblox.services.email";
+
+option optimize_for = SPEED;
+
+message EmailRequest
+{
+  required string from = 1;
+  required string subject = 2;
+
+  required string recipients = 3;
+  // optional string cc = 4;
+  // optional string bcc = 5;
+
+  required string body = 4;
+}
+
+message EmailResponse
+{
+  required Status status = 1;
+  optional string exception = 2;
+}
+
+enum Status
+{
+  SUCCESSFUL = 1;
+  ERROR = 2;
+  EXCEPTION = 3;
+}

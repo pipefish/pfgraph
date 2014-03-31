@@ -1,0 +1,18 @@
+package blox.services.framework;
+
+option java_package = "com.logicblox.services";
+
+option optimize_for = SPEED;
+
+/*
+  Service interface will define each service. -> It has to be moved somewhere else
+*/
+
+message ServiceInterface
+{
+  required string protocol = 1;
+  required string send_predicate = 2;
+  required string receive_predicate = 3;
+  required string receive_predicate_exception = 4;
+}
+

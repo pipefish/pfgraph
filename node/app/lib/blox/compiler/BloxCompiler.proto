@@ -1,0 +1,1221 @@
+package blox.compiler.protocol;
+
+option java_package = "com.logicblox.compiler";
+option java_outer_classname = "ProtoBuf";
+option optimize_for = SPEED;
+
+import "blox/common/Common.proto";
+
+/**
+ * Union type for messages
+ */
+message MessageContainer {
+   required Kind kind = 1;
+
+   enum Kind {
+      // run-time to compiler
+      COMPILE = 0;
+      COMPILE_RESULT = 1;
+
+      PARSE = 2;
+      PARSE_RESULT = 3;
+
+      LINK = 4;
+      LINK_RESULT = 5;
+
+      GET_PREDICATE_NAME = 6;
+      GET_PREDICATE_NAME_RESULT = 7;
+
+      GET_BLOCK_NAME = 8;
+      GET_BLOCK_NAME_RESULT = 9;
+
+      // compiler to run-time, read only
+      GET_PREDICATE_INFO = 20;
+      GET_MISSING_PREDICATE_INFO = 21;
+      GET_PREDICATE_INFO_RESULT = 22;
+
+      GET_VERSION = 23;
+      GET_VERSION_RESULT = 24;
+
+      GET_WORKSPACE_PATH = 25;
+      GET_WORKSPACE_PATH_RESULT = 26;
+
+      GET_VIEW = 27;
+      GET_VIEW_RESULT = 28;
+
+      // compiler to runtime but mutates workspace.
+      // used for moreblox right now.
+      ADD_BLOCK = 30;
+      ADD_BLOCK_RESULT = 31;
+      EXEC_BLOCK = 32;
+      EXEC_BLOCK_RESULT = 33;
+
+      // new runtime.
+      NEW_LINK = 34;
+      NEW_LINK_RESULT = 35;
+
+      // get predicates that depends on a set of input predicates
+      GET_PREDICATE_DEPENDENCIES = 36;
+      GET_PREDICATE_DEPENDENCIES_RESULT = 37;
+
+      // compiler (optimiser) to run-time
+      GET_STATISTICS = 40;
+      GET_STATISTICS_RESULT = 41;
+
+      // admin messages for the compiler in server mode
+      SERVER_CMD = 60;
+      SERVER_CMD_RESULT = 61;
+
+      // communication protocol messages
+      MESSAGE_ERROR = 70;
+      K_BYE = 71;
+   }
+
+   optional Compile compile = 2;
+   optional CompileResult compile_result = 3;
+
+   optional GetPredicateInfo get_predicate_info = 4;
+   optional GetPredicateInfoResult get_predicate_info_result = 5;
+
+   optional GetVersionResult get_version_result = 6;
+
+   optional GetWorkspacePath get_workspace_path = 7;
+   optional GetWorkspacePathResult get_workspace_path_result = 8;
+
+   optional GetView get_view = 9;
+   optional GetViewResult get_view_result = 10;
+
+   optional Link link = 11;
+   optional LinkResult link_result = 12;
+
+   optional GetStatistics get_statistics = 13;
+   optional GetStatisticsResult get_statistics_result = 14;
+
+   optional Parse parse = 15;
+   optional ParseResult parse_result = 16;
+
+   optional ServerCmd server_cmd = 19;
+   optional ServerCmdResult server_cmd_result = 20;
+
+   optional GetPredicateName get_predicate_name = 21;
+   optional GetPredicateNameResult get_predicate_name_result = 22;
+
+   optional GetBlockName get_block_name = 23;
+   optional GetBlockNameResult get_block_name_result = 24;
+
+   optional GetMissingPredicateInfo get_missing_predicate_info = 25;
+
+   optional AddBlock add_block = 26;
+   optional AddBlockResult add_block_result = 27;
+
+   optional ExecBlock exec_block = 28;
+   optional ExecBlockResult exec_block_result = 29;
+
+   optional NewLink new_link = 30;
+   optional NewLinkResult new_link_result = 31;
+
+   optional GetPredicateDependencies get_predicate_dependencies = 32;
+   optional GetPredicateDependenciesResult get_predicate_dependencies_result = 33;
+}
+
+message AddBlock {
+   required CompilationUnit comp_unit = 1;
+}
+
+message AddBlockResult {
+   optional string exception_msg = 1;
+}
+
+message ExecBlock {
+   required CompilationUnit comp_unit = 1;
+}
+
+message ExecBlockResult {
+   optional string exception_msg = 1;
+}
+
+
+/**
+ * Workspace path
+ */
+message GetWorkspacePathResult {
+  required string path = 1;
+  optional ExceptionContainer exception = 2;
+}
+
+message GetWorkspacePath {
+}
+
+/**
+ * Obtain version from compiler or runtime
+ */
+message GetVersion {
+  required string version = 1;
+  optional string build_number = 2;
+}
+
+message GetVersionResult {
+  required string version = 1;
+  optional string build_number = 2;
+  optional ExceptionContainer exception = 3;
+}
+
+/**
+ * Parse
+ */
+message Parse {
+  required string input_text = 1;
+  required string block_name = 2;
+}
+
+message ParseResult {
+  required Code code = 1;
+  optional blox.common.protocol.CompilationProblems problems = 3;
+  optional ExceptionContainer exception = 4;
+
+  enum Code {
+    SUCCESS = 0;
+    WARNINGS = 1;
+    ERRORS = 2;
+    EXCEPTION = 3;
+  }
+}
+
+/**
+ * Compile
+ */
+message Compile {
+  required string input_text = 1;
+  required string block_name = 2;
+
+  // 2012.01.05 GAW
+  // Keep for now to avoid confusing things too much, but
+  // going forward, we should use LogicSort instead.
+  required Stage run_stage = 3;
+  required blox.common.protocol.Lifetime lifetime = 4;
+
+  // 2012.01.05 GAW
+  // Instead of trying to encode how this logic
+  // should be handled as a combination of
+  // run stage and lifetime, which do not map
+  // well to concepts like "inactive after fixpoint",
+  // we are now using a sort.
+  //
+  // For now we'll make it optional, and if it exists
+  // we will use it to override decisions we previously
+  // made based upon stage and lifetime.
+  optional blox.common.protocol.LogicSort sort = 7;
+
+  optional string file_name = 5;
+
+   // we could model this as an enum. But it is easier and probably
+   // more likely to keep in sync with the runtime loglevel to just pass
+   // in a string.
+  optional string log_level = 6;
+}
+
+message CompileResult {
+   //  required Code code = 1;
+  repeated CompilationUnitContainer outputs = 2;
+  optional ExceptionContainer exception = 3;
+}
+
+message CompilationUnitContainer {
+   required Code code = 1;
+   optional CompilationUnit comp_unit = 2;
+   optional blox.common.protocol.CompilationProblems problems = 3;
+
+   enum Code {
+      SUCCESS = 0;
+      WARNINGS = 1;
+      ERRORS = 2;
+   }
+}
+
+message ProvenanceRewriteResult {
+  required Code code = 1;
+  repeated CompilationUnit output = 2;
+  repeated string output_file_name = 3; // bytecode file name
+  optional ExceptionContainer exception = 4;
+
+  enum Code {
+    SUCCESS = 0;
+    WARNINGS = 1;
+    ERRORS = 2;
+    EXCEPTION = 3;
+  }
+}
+
+/**
+ * Link
+ */
+message Link {
+  repeated CompilationUnit input = 1;
+  // 2012.01.05 GAW
+  // These should probably be removed, or changed
+  // to LogicSort in the future, but I think it
+  // is safe to leave as is for now.
+  required Stage run_stage = 2;
+  required blox.common.protocol.Lifetime lifetime = 3;
+  optional bool remove_only = 4 [default = false]; // TODO(lspoon) just an experiment
+}
+
+message LinkResult {
+  required Code code = 1;
+  optional ExecutableProgram program = 2;
+  optional blox.common.protocol.CompilationProblems problems = 3;
+  optional ExceptionContainer exception = 5;
+
+  enum Code {
+    SUCCESS = 0;
+    WARNINGS = 1;
+    ERRORS = 2;
+    EXCEPTION = 3;
+  }
+}
+
+message ExecutableProgram {
+  // 2012.01.05 GAW
+  // FIX!!
+  // These do not seem to be used, which mostly makes sense.
+  // Comment out for now, remove later..
+  // required Stage run_stage = 1;
+  // required Lifetime lifetime = 2;
+  repeated PredicateDeclaration predicate = 3;
+  required ExecutionGraph graph = 4;
+
+  // the list of clauses is temporarily included for debugging
+  // purposes
+  repeated Clause clause = 5;
+
+  // 2012.01.05 GAW
+  // The set of equivalence classes of predicates in this
+  // program.  This is probably redundant with the
+  // permutation information, but will keep it for now...
+  repeated IsoPredicates iso_predicates = 6;
+
+  // 2012.01.08 GAW
+  // Permutation mappings between potential index predicates
+  // so that the runtime knows how to reorder arguments.
+  repeated IndexPermutation index_permutation = 7;
+}
+
+
+/**
+ * "Link" for new runtime
+ * performs:
+ *  - derived-only rule unfolding
+ *  - cascading retraction rule / skolem -> refmode rule creation
+ *  - recursion check
+ */
+message NewLink {
+  repeated CompilationUnit input = 1;
+  // 2012.01.05 GAW
+  // These should probably be removed, or changed
+  // to LogicSort in the future, but I think it
+  // is safe to leave as is for now.
+  required Stage run_stage = 2;
+  required blox.common.protocol.Lifetime lifetime = 3;
+}
+
+message NewLinkResult {
+  required Code code = 1;
+  repeated CompilationUnit output = 2;
+  optional blox.common.protocol.CompilationProblems problems = 3;
+  optional ExceptionContainer exception = 5;
+
+  enum Code {
+    SUCCESS = 0;
+    WARNINGS = 1;
+    ERRORS = 2;
+    EXCEPTION = 3;
+  }
+}
+
+/**
+ * Request for all predicates that have dependencies on the input predicates
+ */
+message GetPredicateDependencies {
+   required Stage run_stage = 1;
+   required blox.common.protocol.Lifetime lifetime = 2;
+   repeated CompilationUnit input = 3;
+}
+
+message GetPredicateDependenciesResult {
+   required Code code = 1;
+   repeated PredicateDependency dependencies = 2;
+   optional ExceptionContainer exception = 3;
+
+   enum Code {
+      SUCCESS = 0;
+      ERRORS = 1;
+      EXCEPTION = 2;
+   }
+}
+
+message PredicateDependency {
+   // from_pred depends on to_pred
+   required DecoratedPredicate from_pred = 1;
+   required DecoratedPredicate to_pred = 2;
+}
+
+message DecoratedPredicate {
+   required string pred_name = 1;
+   optional DeltaModifier delta = 2;
+   required Stage stage = 3;
+}
+
+// 2011.12.30 GAW
+// Used to keep track of which predicates are isomorphic and
+// therefore be used as indexs
+message IsoPredicates {
+  repeated string predicates = 1;
+}
+
+// 2012.01.08 GAW
+// Keep track of how arguments need to be reordered to convert
+// a use of a predicate to an index
+message IndexPermutation {
+  required string source = 1;
+  required string target = 2;
+  repeated int64 mapping = 3;
+}
+
+message SeverityDeclaration {
+  required string problem_code = 1;
+  required blox.common.protocol.Severity severity = 2;
+}
+
+/**
+ * Get views from the workspace
+ */
+message GetView {
+  required string qualified_name = 1;
+}
+
+message GetViewResult {
+  repeated View view = 1;
+  optional ExceptionContainer exception = 2;
+}
+
+/**
+ * Callback from runtime during predInfo, queries, and --storeBlock
+ **/
+message GetPredicateName {
+   required string predname_expr = 1;
+   required string workspace_path = 2;
+}
+
+message GetPredicateNameResult {
+   required Code code = 1;
+   optional string predicate_name = 2;
+   optional string exception_msg = 3;
+
+   enum Code {
+      SUCCESS = 0 ;
+      NOT_FOUND = 1;
+      EXCEPTION = 2;
+      NOT_EXPR = 3;
+   }
+}
+
+message GetBlockName {
+   required string blockname_expr = 1;
+   required string workspace_path = 2;
+}
+
+message GetBlockNameResult {
+   required Code code = 1;
+   optional string block_name = 2;
+   optional string exception_msg = 3;
+
+   enum Code {
+      SUCCESS = 0;
+      NOT_FOUND = 1;
+      EXCEPTION = 2;
+   }
+}
+
+
+/**
+ * Callback from the compiler during a compile command
+ */
+message GetPredicateInfo {
+  repeated string qualified_name = 1;
+}
+
+message CompilationUnitSummary {
+  // level = true ~> level 1 logic
+  // level = false ~> level 0 logic
+  required bool level = 1;
+  repeated blox.common.protocol.PredicateInfo info = 2;
+  // 2012.01.05 GAW
+  // Instead of trying to encode how this logic
+  // should be handled as a combination of
+  // run stage and lifetime, which do not map
+  // well to concepts like "inactive after fixpoint",
+  // we are now using a sort.
+  required blox.common.protocol.LogicSort sort = 3;
+
+  repeated string derived_predicate = 5;
+  optional ModuleUnit module_info = 6;
+  // 2011.06.09 GAW
+  // For separate compilation we need to keep track of the
+  // referenced predicates, which is not quite the same as
+  // owned
+  repeated ReferencedPredicate ref_predicates = 7;
+  // 2011.10.21 GAW
+  // Now keep track of which libraries a bytecode object
+  // may depend on (we should improve it to be only those
+  // that define predicates in ref_predicates, but
+  // that will take more engineering)
+  repeated LibraryInfo library = 8;
+  // 2011.10.21 GAW
+  // If this block uses level one code (or presumably above).
+  // In that case the MoReBlox libraries are an implicit
+  // dependency.  Ideally we could keep this in a LibraryInfo,
+  // but that would just wind up moving the special casing around.
+  optional string moreblox_lib_hash = 9;
+  repeated string extensional_predicate = 10;
+
+  // Version of the runtime this code was compiled against
+  optional string runtime_version = 11;
+
+  // 2013.01.02 GAW
+  // Makes some error reporting easier.
+  // Should make this a required field in the future.
+  optional string block_name = 12;
+  optional string file_name = 13;
+}
+
+message GetPredicateInfoResult {
+  repeated blox.common.protocol.PredicateInfo info = 1;
+  optional ExceptionContainer exception = 2;
+}
+
+/**
+ * Get predicate info for all predicates in workspace,
+ * EXCEPT for the ones listed as not_missing_name
+ **/
+message GetMissingPredicateInfo {
+   repeated string not_missing_name = 1;
+}
+
+message ExceptionContainer {
+  required Kind kind = 1;
+
+  enum Kind {
+    UNSPECIFIC = 0;
+    TRANSACTION = 1;
+  }
+
+  optional UnspecificException unspecific = 2;
+  optional TransactionException transaction = 3;
+}
+
+message UnspecificException {
+  required string msg = 1;
+}
+
+message TransactionException {
+  required string msg = 1;
+  required bool auto_aborted = 2;
+}
+
+
+// GAW 2010.4.05 keep track of view dependencies
+// in CompilationUnits to make it easier to
+// correctly remove blocks with views/derived-only
+// rules
+message ViewDependencyEntry {
+  required string view = 1;
+  repeated string dependents = 2;
+}
+message ViewDependencyMap {
+  repeated ViewDependencyEntry entries = 1;
+}
+
+message ReferencedPredicate {
+  required bool level = 1;
+  required string name = 2;
+  required blox.common.protocol.PredicateInfo info = 3;
+}
+
+message CompilationUnit {
+  required string name = 1;
+  // 2012.01.05 GAW
+  // Keep for now to avoid confusing things too much, but
+  // going forward, we should use LogicSort instead.
+  required Stage run_stage = 2;
+  required blox.common.protocol.Lifetime lifetime = 3;
+
+  // 2012.01.05 GAW
+  // Instead of trying to encode how this logic
+  // should be handled as a combination of
+  // run stage and lifetime, which do not map
+  // well to concepts like "inactive after fixpoint",
+  // we are now using a sort.
+  //
+  // For now we'll make it optional, and if it exists
+  // we will use it to override decisions we previously
+  // made based upon stage and lifetime.
+  optional blox.common.protocol.LogicSort sort = 21;
+
+  // predicates that could conceivably be declared by this block.
+  // specifically, predicates are declared in a different block, but
+  // - has a real declaration or is in the head of an IDB rule in this block
+  // - is not calculated
+  // - is not primitive
+  // - is not a refmode
+  //
+  // a predicate still exists in the workspace if it is owned
+  // by at least one block -- that is it could have conceivably been declared
+  // by that block.
+  //
+  // if there is a reference to predicate P in a block, then there
+  // needs to be at least one block either declaring or
+  // owning P in a different block.
+  //
+  // used by removeBlock and replaceBlock to check whether a block can be removed.
+  repeated string own_predicate = 5;
+
+  // predicates that have IDB rules in this CompilationUnit (includes
+  // predicates declared in this unit)
+  repeated string derived_predicate = 6;
+
+  // a map from a derived-only predicate P to all the predicates whose
+  // derivation depends on P.
+  // also used in removal and replacement of blocks: if a block defining a view
+  // predicate changes, all predicates that depend on it needs to be re-evaluated.
+  optional ViewDependencyMap view_dep_map = 7;
+
+  // predicates declared in this block.  a predicate is declared
+  // in this block if:
+  // - it has not bee declared by another block
+  // - either there's a declaration constraint in this block, or
+  //   it appears in the head of an IDB rule or
+  //   it is a local predicate appearing in the head of any rule.
+  repeated PredicateDeclaration predicate = 8;
+
+  // clauses that specify "meta" properties, such as system:PulsePredicate.
+  // for the most part this is deprecated, and replaced by lang:*.
+  // however we still support them since there's a large amount of legacy code
+  // and tests that use this. This should not be supported in the new runtime.
+  //repeated Clause meta_clause = 9;
+
+  // regular clauses: rules and constraints.
+  repeated Clause clause = 10;
+
+  // derived-only predicates defined in this block and their rules
+  // used for passing to linker later.
+  repeated View view = 11;
+
+  // severity declaration that apply for the block.
+  // most errors are caught during local compilation time.
+  // global errors like recursion errors are caught at link time
+  // and thus the severity declaration is passed to linker at that time
+  repeated SeverityDeclaration severity = 12;
+
+  // non-module block
+  optional bool legacy = 13  [default = false];
+
+  // level: false represents level 0, true represents level 1
+  optional bool level = 14 [default = false];
+
+  optional ModuleUnit module_info = 15;
+  optional string file_name = 16;
+
+  // 2013.01.02 GAW
+  // Makes some error reporting easier.
+  // Should make this a required field in the future.
+  optional string block_name = 23;
+
+  // 2011.06.09 Gaw
+  // For separate compilation we need to keep track of the
+  // referenced predicates, which is not quite the same as
+  // owned
+  repeated ReferencedPredicate ref_predicates = 17;
+
+  // Generated compilation units may have a display name that
+  // is more indicative of how they are generated. e.g. foo["bar"]
+  optional string display_name = 18;
+
+  // 2011.10.24 GAW
+  // Optional source text that can be used to populate
+  // system:logic:logicBlockSourceText.  Primarily motivated
+  // by separate compilation.
+  optional string source_text = 19;
+
+  // EDB, does not have to be declared or owned in this block
+  repeated string extensional_predicate = 20;
+
+  // 2012.01.03 GAW
+  // Whether a block is a trivial extension used to be computed
+  // by the runtime.  However, all of the information it used
+  // to make the decision is available to the compiler.
+  // Furthermore, to properly compute the execution graph,
+  // it needed to take potential index predicates into account.
+  // Rather than extend the protocol buffer with a new field
+  // specifically for this case, it seemed better to just move
+  // the entire decision to the compiler.
+  optional bool is_trivial_extension = 22;
+}
+
+message PredicateDeclaration {
+   enum Kind {
+     ENTITY = 0;
+     SUBENTITY = 1;
+     PREDICATE = 2;
+     FILE = 3;
+   }
+
+   required Kind kind = 1;
+   // fully qualified name
+   required string name = 2;
+   // without namespace designation
+   optional string local_name = 3;
+   // 2012.07.18 GAW
+   // Keep track of where a local predicate is
+   // defined to detect whether it is being
+   // incorrectly used outside of its defining
+   // block.  Currently we will be conservative
+   // for compatibility purposes and if this
+   // field is missing not report, but in an
+   // upcoming release it will become manditory.
+   optional string definition_block = 35;
+
+   // generated predicates may have display names that
+   // are more indicative of how they are generated. e.g. foo["bar"]
+   optional string display_name = 29;
+
+   // common properties
+   // EDB predicate whose data is transaction-lifetime
+   optional bool pulse = 4;
+
+   // predicate that's not a refmode, and not primitive (e.g. ne_2)
+   required bool own = 5;
+
+   // predicate that cannot have more rules deriving into it than
+   // those declared in the declaration block.  a property module predicates
+   // may have. can be thought of as "read-only" by other blocks.
+   optional bool sealed = 28 [default = false];
+
+   // entities
+   optional string super = 10;
+   optional string refmode = 11;
+   optional bool ordered = 12;
+   //optional uint64 capacity = 13;  // to be depricated for runtime 4.0+
+
+   // non-entities
+   optional int64 key_arity = 14;
+   optional int64 value_arity = 15;
+   repeated blox.common.protocol.Type argument_type = 16;
+   optional blox.common.protocol.DerivationType derivation_type = 17;
+
+   // refmodes are one_to_one.  other predicates may be declared as one-to-one, but
+   // this constraint is not currently checked by the runtime.
+   required bool one_to_one = 18;
+
+   optional blox.common.protocol.Constant default_value = 19;
+
+   optional bool skolem = 26;
+
+   // predicate is an auto-numbered refmode.
+   optional bool auto_numbered = 27;
+
+   // file properties
+   optional string file_path = 20;
+   optional string delimiter = 21;
+   optional bool has_column_names = 23;
+   optional string delim_column_names = 24;
+   
+   // 2011.06.09 GAW
+   // The synthetic flag is used to indicate
+   // special compiler generated predicates,
+   // such as projection predicates created
+   // to support certain forms of negation.
+   optional bool synthetic = 31;
+
+   optional bool level = 32 [default = false];
+
+  // 2012.04.16 GAW
+  // constructor will eventually replace
+  // the skolem field.  For now the compiler
+  // will set both until skolem is removed.
+  // Clients should ideally respect both
+  // fields.
+   optional bool constructor = 33;
+
+  // 2012.05.31 GAW
+  // Because of the way compilation is currently
+  // structured, we need to provide a way to
+  // keep track of whether a predicate is
+  // calculated so that when we compute
+  // PredicateInfo from PredicateDelcarations,
+  // we can set the is_calculated field correctly.
+  // However, the runtime should ignore predicates
+  // with this flag set.  The need for this
+  // should go away once we standardize on a
+  // single message for predicates.
+   optional bool calculated = 34 [default=false];
+
+  // Deprecated
+  //
+   //optional blox.common.protocol.StorageModel storage_model = 6;
+   //optional blox.common.protocol.LockingPolicy locking_policy = 7;
+   //optional blox.common.protocol.Partitioning partitioning = 8;
+   //optional string role_names = 9;
+   //optional bool disjoint = 25;
+   //optional bool line_numbers = 22;
+   //optional string remote_ref = 30; 
+}
+
+message Clause {
+  enum Kind {
+    RULE = 0;
+    P2P = 1;
+    CONSTRAINT = 2;
+  }
+
+  required Kind kind = 1;
+  optional Rule rule = 2;
+  optional P2PMapping p2p = 3;
+  optional Constraint constraint = 4;
+}
+
+message Rule {
+  // variables that exist in the head as well as the body of a rule
+  repeated VariableDeclaration var = 1;
+  required ClauseHead head = 2;
+  required ClauseBody body = 3;
+  optional blox.common.protocol.Position position = 4;
+
+  optional bool linearly_recursive = 5;
+  optional bool uniquely_derived = 6;
+  // 2013.01.04 GAW
+  // Mostly to allow NRT to filter them
+  optional bool auto_retraction = 7;
+}
+
+message View {
+  required string predicate_name = 1;
+  repeated Rule rule = 2;
+}
+
+message Constraint {
+  required ClauseBody body = 1;
+  optional blox.common.protocol.Position position = 2;
+}
+
+message P2PMapping {
+  required string library = 1;
+  required string argument = 2;
+
+  repeated VariableDeclaration var = 3;
+  required ClauseHead head = 4;
+  required ClauseBody body = 5;
+  optional blox.common.protocol.Position position = 6;
+  optional bool known_agg = 7;
+  repeated AggregateOperation agg_op = 8;
+}
+
+message AggregateOperation {
+  required string name = 1;
+  optional string numvar = 2;
+  repeated string var = 3;
+  repeated string dim = 4;
+  repeated string result = 5;
+}
+
+message ClauseHead {
+  // variables that exist only in the head of a rule
+  repeated VariableDeclaration var = 1;
+  // 2010.07.27 Switched to be a HeadAtom
+  repeated HeadAtom head_atom = 2;
+  optional blox.common.protocol.Position position = 3;
+}
+
+// 2010.07.27 GAW Message to associate special data with
+// each atom in the head of a clause
+message HeadAtom {
+  required Atom atom = 1;
+  optional bool uniquely_derives = 2 [default = false];
+  optional bool functionally_determined = 3 [default = false];
+}
+
+message ClauseBody {
+  // variables that exist only in the body of a rule
+  repeated VariableDeclaration var = 1;
+  required Formula formula = 2;
+  optional blox.common.protocol.Position position = 3;
+}
+
+/**
+ * Union for formula
+ */
+message Formula {
+  enum Kind {
+    ATOM = 0;
+    NEGATION = 1;
+    CONJUNCTION = 2;
+    DISJUNCTION = 3;
+    CASES = 4;
+  }
+
+  required Kind kind = 1;
+  optional Atom atom = 2;
+  optional Negation negation = 3;
+  optional Conjunction conjunction = 4;
+  optional Disjunction disjunction = 5;
+  optional Cases cases = 6;
+}
+
+message Negation {
+  // variables that exist only in negation (currently not supported)
+  repeated VariableDeclaration var = 1;
+  required Formula formula = 2;
+  optional blox.common.protocol.Position position = 3;
+}
+
+message Conjunction {
+  repeated Formula formula = 1;
+  optional blox.common.protocol.Position position = 2;
+}
+
+message Disjunction {
+  repeated Formula formula = 1;
+  optional blox.common.protocol.Position position = 2;
+}
+
+/**
+ * Cases construct (if..else..else..), e.g.
+ * "cases(x) of f[x]=y else g[x]=y else X(x),y=0".
+ */
+message Cases {
+   repeated Variable key_variables = 1;
+   repeated Formula formula = 2;
+   optional blox.common.protocol.Position position = 3;
+}
+
+/**
+ * Union for terms
+ */
+message Term {
+  enum Kind {
+    CONSTANT = 0;
+    VARIABLE = 1;
+  }
+
+  required Kind kind = 1;
+  optional blox.common.protocol.Constant constant = 2;
+  optional Variable variable = 3;
+}
+
+message Atom {
+  required string predicate_name = 1;
+  optional DeltaModifier delta = 2;
+  optional Stage stage = 3;
+  repeated Term key_argument = 4;
+  repeated Term value_argument = 5;
+  optional blox.common.protocol.Position position = 6;
+  optional bool one_to_one = 7;
+
+   // not set by the compiler
+  optional bool negated_inverse = 8;
+  optional string display_name = 9;
+}
+
+message Variable {
+  required string name = 1;
+  optional blox.common.protocol.Position position = 3;
+}
+
+message VariableDeclaration {
+  required string name = 1;
+  required blox.common.protocol.Type type = 2;
+}
+
+enum DeltaModifier {
+  DELTA_INSERT = 0;
+  DELTA_DELETE = 1;
+  DELTA_UPSERT = 2;
+  DELTA_UPSERT_DEFAULT = 3;
+}
+
+enum Stage {
+  PREVIOUS = 0;
+  INITIAL = 1;
+  OVERRIDE = 2;
+  FINAL = 3;
+}
+
+/**
+ * Execution graph
+ */
+message ExecutionGraph {
+  repeated ExecutionUnit unit = 1;
+}
+
+message ExecutionUnit {
+  enum Kind {
+    // a single-rule, non-cyclic execution unit.
+    SIMPLE = 0;
+    // multi-rule, non-cylic execution unit. rules are
+    // combined due to overlapping LHS
+    SEQ = 1;
+    // linearly recursive cyclic unit
+    LINEAR_CYCLE = 2;
+    // regular cyclic unit
+    CYCLE = 3;
+    // unit that validates the deltas on a predicate.
+    // this exists for any predicate who may have had a delta derived
+    // validate delta checks forwhether a retraction in on an existing fact
+    VALIDATE_DELTA = 4;
+    // not used
+    SYNTHETIC = 5;
+  }
+
+  required Kind kind = 1;
+
+  optional Simple simple = 2;
+  optional Seq seq = 3;
+  optional LinearCycle linear_cycle = 4;
+  optional Cycle cycle = 5;
+  optional ValidateDelta validate_delta = 6;
+  optional Synthetic synthetic = 7;
+
+  optional int64 unit_id = 8;
+  repeated int64 depends_on = 9;
+
+  message Simple {
+    required bool delta = 1;
+    required Clause clause = 2;
+  }
+
+  message Seq {
+    required bool delta = 1;
+    repeated ExecutionUnit unit = 2;
+  }
+
+  message Cycle {
+    required bool delta = 1;
+    repeated ExecutionUnit unit = 2;
+  }
+
+  message LinearCycle {
+    repeated ExecutionUnit unit = 1;
+  }
+
+  message ValidateDelta {
+    required string predicate_name = 1;
+  }
+
+  message Synthetic {
+  }
+
+}
+
+/**
+ * Statistics for Semmle Optimiser
+ */
+message GetStatistics {
+  repeated StatisticsRequest request = 1;
+}
+
+message GetStatisticsResult {
+  repeated PredicateStatistics statistics = 1;
+  optional ExceptionContainer exception = 2;
+}
+
+// A request to get the statistics for a given predicate
+message StatisticsRequest {
+
+    // The name of the predicate to get statistics for
+    required string predicate_name = 1;
+
+    // The level of detail of the statistics to compute.
+    // Only a hint; the implementation is free to provide
+    // more or less detail
+    optional StatisticsLevel level = 2 [default = CARDINALITY_AND_VALUES];
+
+    enum StatisticsLevel {
+      // Just get the cardinality of the predicate
+      CARDINALITY_ONLY = 1;
+
+      // Get the cardinality and the number of distinct values (for functions)
+      CARDINALITY_AND_VALUES = 2;
+
+      // Get the cardinality and the size of each column
+      ALL_COLUMNS = 3;
+    }
+}
+
+// The response to a StatisticsRequest, giving the stats for a predicate
+message PredicateStatistics {
+
+  // The name of the predicate whose statistics are being given
+  required string predicate_name = 1;
+
+  // The cardinality of the predicate (number of distinct tuples)
+  required int64 cardinality = 2;
+
+  // The cardinality of columns of the predicate. This is the number
+  // of distinct values in each column. Any subset of the columns of the
+  // predicate will be accepted
+  repeated ColumnStatistics columns = 3;
+}
+
+// The statistics for a given column. This is the number of distinct values
+// in that column
+message ColumnStatistics {
+
+  // The (0-based) index of the column in the predicate
+  required int64 column = 1;
+
+  // The number of distinct values in the given column
+  required int64 cardinality = 2;
+}
+
+message ServerCmd {
+   required Kind kind = 1;
+   enum Kind {
+      SHUTDOWN = 0;
+      STATUS = 1;
+   }
+}
+
+message ServerCmdResult {
+   enum Kind {
+      RUNNING = 0;
+      SHUTDOWN_OK = 1;
+   }
+   required Kind kind = 1;
+}
+
+// Section for Messages related to the Module system and Separate Compilation
+
+// This is an extension to CompilationUnit for modules. Occurs as an optional field in CompilationUnit
+message ModuleUnit {
+  required string namespace = 1;
+  required string module_name = 2;
+  // 2010.08.31 GAW
+  // Can't call it just "export" because that conflicts with the C++ keyword
+  repeated ModuleExport predicate_export = 3;
+  repeated ModuleDependency dependency = 4;
+}
+
+message ModuleDependency {
+  required string name = 1;
+  repeated string predicate = 2;
+}
+
+message ModuleExport {
+  required string name = 1;
+  optional bool sealed = 2;
+}
+
+
+// We use a ProjectSummary message to store information about a
+// compiled project. Right now it's a list of CompileGroup's.
+
+message ProjectSummary {
+   repeated CompileGroup compile_group = 1;
+   repeated CompilationWorkspace compilation_workspace = 2;
+   required string project_file_hash = 3;
+   required bool success = 4;
+   required string name = 5;
+   optional bool level = 6;
+   repeated LibraryInfo library = 7;
+   repeated CompilationUnitSummary summary = 8;
+   optional NameTree name_tree = 9;
+
+   // Optional hint to the compiler as to whether a full rebuild is necessary.
+   // Only relevant if success = false
+   // 2012.01.18 GAW
+   // I've refined this to purely be a flag that an incremental build failure
+   // has occurred and that it should use a fresh compilation workspace.
+   optional bool rebuild = 10;
+
+   optional string severities_hash = 11;
+
+   // 2012.01.10 GAW
+   // Path to protocol buffer descriptors to be installed.
+   repeated DescriptorInfo descriptors = 12;
+
+   // 2012.06.11 GAW
+   // Needed to detect metamodel changes that would force the need
+   // to rebuild a compilation workspace.
+   optional string morebloxlib_hash = 13;
+}
+
+message CompilationWorkspace {
+   required string workspace_path = 1;
+   required bool level = 2;
+   repeated string history = 3;
+   // 2012.05.04 GAW
+   // This field will no longer set read or set by the
+   // compiler and will be removed in an upcoming release.
+   // The compiler just obtains this information directly
+   // from the workspace upon initialization.
+   repeated blox.common.protocol.PredicateInfo info = 4;
+  /**
+   * Optionally provide the information about when the workspace
+   * was created.  If it is not provided, the compiler will
+   * assume that the workspace is newly created since the
+   * last time it checked.  Otherwise, if provided it may
+   * use the information to decide that it doesn't need to
+   * copy the workspace over.
+   */
+   optional int64 creationTime = 5;
+  /**
+   * Indicate whether this compilation workspaces is
+   * local or exported
+   */
+   optional bool exported = 6 [default = true];
+}
+
+// A compile group may be generated.
+message CompileGroup {
+   required int64 group_id = 1;
+   required int64 level = 2;
+   repeated ProjectFile bytecode_file = 3;
+   required bool generated = 4;
+}
+
+message ProjectFile {
+   required string block_name = 1;
+   // 2012.01.05 GAW
+   // Instead of trying to encode how this logic
+   // should be handled as a combination of
+   // run stage and lifetime, which do not map
+   // well to concepts like "inactive after fixpoint",
+   // we are now using a sort.
+   required blox.common.protocol.LogicSort sort = 2;
+   required string bytecode_file = 3;
+}
+
+message DescriptorInfo {
+  required string name = 1;
+  required string location = 2;
+}
+
+message LibraryInfo {
+  required string name = 1;
+  required string summary_hash = 2;
+  required int64 level = 3;
+}
+
+message NameTree {
+  message PredicateData {
+    required string name = 1;
+    required string qualified_name = 2;
+    required bool sealed = 3;
+  }
+  message NameSpace {
+    required string name = 1;
+    required NameTree tree = 2;
+  }
+  repeated PredicateData predicates = 1;
+  repeated NameSpace namespaces = 2;
+  required bool is_module = 3;
+}
