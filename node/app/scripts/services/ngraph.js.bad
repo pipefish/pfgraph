@@ -1,0 +1,11 @@
+(function () {
+  'use strict';
+
+  angular.module('ngraph')
+    .factory('ngraph',[function(){
+      var ngraph = require('ngraph.graph');
+      // d3 version 3 from http://d3js.org/d3.v3.min.js
+      return ngraph;
+    }]);
+
+}());

@@ -13,7 +13,7 @@ function isLoggedIn(req, res, next) {
   res.redirect('/');
 }
 
-module.exports = function(app, passport) {
+module.exports = function(app, lb) {
 
 	// =====================================
 	// LOGIN ===============================

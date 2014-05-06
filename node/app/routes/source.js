@@ -13,7 +13,7 @@ function split(a, n) {
     return out;
 }
 
-module.exports = function(app, passport,lbConnect,lbConfig) {
+module.exports = function(app, lb) {
 
   // api ---------------------------------------------------------------------
 
@@ -32,7 +32,7 @@ module.exports = function(app, passport,lbConnect,lbConfig) {
 
       // Users
       function(callback) {
-        lbConnect(lbConfig.default, function(err,api) {
+        lb.conn(lb.config.default, function(err,api) {
           csvstream = csv.createCsvFileReader(__dirname + "/../../developer/users.csv", { columnsFromHeader: true });
           logicarray = [];
           queue = async.queue(function(task, next) {
@@ -73,7 +73,7 @@ module.exports = function(app, passport,lbConnect,lbConfig) {
 
       // Movies
       function(callback) {
-        lbConnect(lbConfig.default, function(err,api) {
+        lb.conn(lb.config.default, function(err,api) {
           csvstream = csv.createCsvFileReader(__dirname + "/../../developer/movies.csv", { columnsFromHeader: true });
           logicarray = [];
           queue = async.queue(function(task, next) {
@@ -114,7 +114,7 @@ module.exports = function(app, passport,lbConnect,lbConfig) {
 
       // Movie ratings
       function(callback) {
-        lbConnect(lbConfig.default, function(err,api) {
+        lb.conn(lb.config.default, function(err,api) {
           csvstream = csv.createCsvFileReader(__dirname + "/../../developer/ratings.csv", { columnsFromHeader: true });
           logicarray = [];
           queue = async.queue(function(task, next) {
@@ -155,7 +155,7 @@ module.exports = function(app, passport,lbConnect,lbConfig) {
 
       // Distances
       function(callback) {
-        lbConnect(lbConfig.default, function(err,api) {
+        lb.conn(lb.config.default, function(err,api) {
           csvstream = csv.createCsvFileReader(__dirname + "/../../developer/prod-distances.csv", { columnsFromHeader: true });
           logicarray = [];
           queue = async.queue(function(task, next) {

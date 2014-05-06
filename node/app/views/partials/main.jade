@@ -1,0 +1,26 @@
+div(ng-include='\'partials/navbar\'')
+
+.jumbotron(ng-controller="MainCtrl")
+  form
+    input(id="user-id", type="text", ng-model="userIDToGet")
+    br
+    p
+      | Distance: {{threshold}}
+    input(id="threshold", type="range", ng-model="threshold", min=0, max=100)
+    button(id="get-btn",class="btn btn-success",ng-click="getUser(userIDToGet,threshold)") Get User
+
+  h4 {{node.name}}
+  p {{node.bio}}, {{node.url}}
+
+  h4 Neighbors
+    graph-ngraph(data="neighbors")
+
+
+
+
+
+
+
+
+.footer
+  p ♥ from the Yeoman team

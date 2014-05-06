@@ -1,0 +1,95 @@
+doctype 5
+html(lang='en', ng-app='pipewebApp')
+  head
+    meta(charset='utf-8')
+    title Pipegraph
+    link(rel='stylesheet', href='/styles/main.css')
+body
+  #main
+
+  .container
+    .row
+    section
+      ul
+        li
+          a(href="/v1/graph/reload") Reload the graph
+
+  .container
+    #graph
+
+
+  footer
+    .container
+      .row
+      section
+        ul
+          li
+            a(href="/v1/graph/reload")
+              span About the app
+          li
+            a(data-toggle='', title='', style='cursor: pointer;', data-original-title='movieClub')
+              span Movie Club
+      section
+        ul
+          li
+            a(data-toggle='', title='', style='cursor: pointer;', data-original-title='pipefish')
+              span Pipefish.com
+          li
+            a(data-toggle='', title='', style='cursor: pointer;', data-original-title='contact')
+              span Contact Us
+      section
+        ul
+          li
+            a(data-toggle='', title='', style='cursor: pointer;', data-original-title='support')
+              span Support
+          li
+            a(data-toggle='', title='', style='cursor: pointer;', data-original-title='pivacy')
+              span Pivacy Policy
+      section
+         ul
+          li.facebook
+            a(data-toggle='', title='', style='cursor: pointer;', data-original-title='Facebook')
+              i.icon-facebook
+              span Facebook
+          li.twitter
+            a(data-toggle='', title='', style='cursor: pointer;', data-original-title='Twitter')
+              i.icon-twitter
+              span Twitter
+    .container
+      .row.footer-bottom
+        span
+          p ©2012-2013 All Rights Reserved. Pipefish TV Club is a trademark of Pipefish, LLC.
+        span
+          i.icon-globe
+          span Made in Atlanta
+    .darth-blanket
+
+
+
+  //- load bower scripts
+  script(src='bower_components/jquery/jquery.js')
+  script(src='bower_components/jquery.easing/js/jquery.easing.js')
+  script(src='bower_components/jquery-ui/ui/jquery-ui.js')
+  script(src='bower_components/angular/angular.js')
+  script(src='bower_components/bootstrap/dist/js/bootstrap.js')
+  script(src='bower_components/angular-resource/angular-resource.js')
+  script(src='bower_components/angular-cookies/angular-cookies.js')
+  script(src='bower_components/angular-sanitize/angular-sanitize.js')
+  script(src='bower_components/sparkline/index.js')
+  script(src='bower_components/jquery-toggle/toggles.min.js')
+  script(src='bower_components/ngInfiniteScroll/ng-infinite-scroll.js')
+  script(src='bower_components/jquery.serializeJSON/jquery.serializeJSON.js')
+
+  //- load app scripts
+  script(src='scripts/app.js')
+  script(src='scripts/controllers/discover/discover.js')
+  script(src='scripts/controllers/discover/show.js')
+  script(src='scripts/controllers/learn/learn.js')
+  script(src='scripts/controllers/learn/person.js')
+  script(src='scripts/controllers/connect/connect.js')
+  script(src='scripts/controllers/connect/comment.js')
+  script(src='scripts/controllers/settings/accounts.js')
+
+  script(src='http://standalone.pipefish.com:9002/assets/fishtracker.js')
+  script
+    document.write('<div id="fishtracker"></div>');fishtracker.init({site:'pipeweb',rec:'pipeweb'});

@@ -1,4 +1,4 @@
-module.exports = function(lbConnect,lbConfig) {
-    user  = require('./users')(lbConnect,lbConfig);
-    thing = require('./things')(lbConnect,lbConfig);
+module.exports = function(lb) {
+    user  = require('./users')(lb);
+    thing = require('./things')(lb);
 };
